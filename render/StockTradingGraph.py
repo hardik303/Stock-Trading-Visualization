@@ -8,7 +8,7 @@ from matplotlib import style
 
 # finance module is no longer part of matplotlib
 # see: https://github.com/matplotlib/mpl_finance
-from mpl_finance import candlestick_ochl as candlestick
+from .mpl_finance import candlestick_ochl as candlestick
 
 style.use('dark_background')
 
@@ -19,10 +19,13 @@ DOWN_COLOR = '#EF534F'
 UP_TEXT_COLOR = '#73D3CC'
 DOWN_TEXT_COLOR = '#DC2C27'
 
+from datetime import datetime
 
 def date2num(date):
-    converter = mdates.strpdate2num('%Y-%m-%d')
-    return converter(date)
+    print(date)
+    converter = datetime.strptime(date[2:-6], '%y-%m-%d %H:%M:%S').timestamp()
+                                
+    return converter
 
 
 class StockTradingGraph:
@@ -154,7 +157,7 @@ class StockTradingGraph:
                                        fontsize=8,
                                        arrowprops=(dict(color=color)))
 
-    def render(self, current_step, net_worth, trades, window_size=40):
+    def render(self, current_step, net_worth, trades, window_size=100):
         self.net_worths[current_step] = net_worth
 
         window_start = max(current_step - window_size, 0)
@@ -177,7 +180,7 @@ class StockTradingGraph:
         plt.setp(self.net_worth_ax.get_xticklabels(), visible=False)
 
         # Necessary to view frames before they are unrendered
-        plt.pause(0.001)
+        plt.pause(0.00001)
 
     def close(self):
         plt.close()
