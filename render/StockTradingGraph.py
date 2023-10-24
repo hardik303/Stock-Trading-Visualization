@@ -22,7 +22,6 @@ DOWN_TEXT_COLOR = '#DC2C27'
 from datetime import datetime
 
 def date2num(date):
-    print(date)
     converter = datetime.strptime(date[2:-6], '%y-%m-%d %H:%M:%S').timestamp()
                                 
     return converter
@@ -94,7 +93,7 @@ class StockTradingGraph:
                            self.df['High'].values[step_range], self.df['Low'].values[step_range])
 
         # Plot price using candlestick graph from mpl_finance
-        candlestick(self.price_ax, candlesticks, width=1,
+        candlestick(self.price_ax, candlesticks, width=10,
                     colorup=UP_COLOR, colordown=DOWN_COLOR)
 
         last_date = date2num(self.df['Date'].values[current_step])
@@ -151,8 +150,8 @@ class StockTradingGraph:
                 total = '{0:.2f}'.format(trade['total'])
 
                 # Print the current price to the price axis
-                self.price_ax.annotate(f'${total}', (date, high_low),
-                                       xytext=(date, high_low),
+                self.price_ax.annotate(f'${total}', (date, float(total)/int(trade['shares'])),
+                                       xytext=(date, float(total)/int(trade['shares'])),
                                        color=color,
                                        fontsize=8,
                                        arrowprops=(dict(color=color)))
@@ -178,9 +177,9 @@ class StockTradingGraph:
 
         # Hide duplicate net worth date labels
         plt.setp(self.net_worth_ax.get_xticklabels(), visible=False)
-
+        
         # Necessary to view frames before they are unrendered
-        plt.pause(0.00001)
+        plt.pause(1)
 
     def close(self):
         plt.close()

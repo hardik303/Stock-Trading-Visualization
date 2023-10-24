@@ -19,6 +19,7 @@ from env.StockTradingEnv import StockTradingEnv
 import pandas as pd
 
 
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 Transition = namedtuple('Transition',
@@ -66,12 +67,18 @@ class DQN(nn.Module):
         self.layer1 = nn.Linear(n_observations, 128)
         self.layer2 = nn.Linear(128, 128)
         self.layer3 = nn.Linear(128, n_actions)
+        self.lstm = nn.LSTM(input_size=5, hidden_size=5,
+                          num_layers=2, batch_first=True)
 
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
     def forward(self, x):
-        print(x.shape)
-        x = x.reshape(x.shape[0]*x.shape[1]*x.shape[2]//210,210)
+        print(x)
+        bs = x.shape[0]*x.shape[1]*x.shape[2]//210
+        x , (h,c)= self.lstm(x.reshape(bs,42,5))
+        print(h)
+        x = torch.tensor(h,device=device)
+        x = x.reshape(bs,10)
         x = F.relu(self.layer1(x))
         x = F.relu(self.layer2(x))
         return self.layer3(x)
@@ -90,7 +97,7 @@ LR = 1e-4
 n_actions = 3
 # Get the number of state observations
 # state, info = env.reset()
-n_observations = 210
+n_observations = 10
 
 policy_net = DQN(n_observations, n_actions).to(device)
 target_net = DQN(n_observations, n_actions).to(device)
@@ -139,7 +146,6 @@ def optimize_model():
     non_final_next_states = torch.cat([s for s in batch.next_state
 
                                                 if s is not None])
-    print(batch.action)
     state_batch = torch.cat(batch.state)
     action_batch = torch.cat(batch.action)
     reward_batch = torch.cat(batch.reward)
@@ -180,10 +186,9 @@ def optimize_model():
 obs = env.reset()
 obs = torch.tensor(obs, dtype=torch.float32, device=device).unsqueeze(0)
 for t in count():
-    # print(t,end=" ")
     action = select_action(obs)
     observation, reward, terminated, info = env.step(action)
-    env.render(title="MSFT")
+    env.render(title="MSFT",mode='live')
     reward = torch.tensor([reward], device=device)
     done = terminated
 

@@ -8,12 +8,12 @@ import numpy as np
 from render.StockTradingGraph import StockTradingGraph
 
 MAX_ACCOUNT_BALANCE = 2147483647
-MAX_NUM_SHARES = 10
+MAX_NUM_SHARES = 2147483647
 MAX_SHARE_PRICE = 5000
-MAX_OPEN_POSITIONS = 1
+MAX_OPEN_POSITIONS = 5
 MAX_STEPS = 20000
 
-INITIAL_ACCOUNT_BALANCE = 10000
+INITIAL_ACCOUNT_BALANCE = 100000
 
 LOOKBACK_WINDOW_SIZE = 40
 
@@ -84,14 +84,13 @@ class StockTradingEnv(gym.Env):
         current_price = random.uniform(
             self.df.loc[self.current_step, "Open"], self.df.loc[self.current_step, "Close"])
 
-        print(action)
         action_type = action[0][0][0]
         amount = action[0][0][1]
 
         if action_type < 1:
             # Buy amount % of balance in shares
             total_possible = int(self.balance / current_price)
-            # shares_bought = int(total_possible * amount)
+            shares_bought = int(total_possible * amount)
             shares_bought = 100
             prev_cost = self.cost_basis * self.shares_held
             additional_cost = shares_bought * current_price
@@ -108,7 +107,6 @@ class StockTradingEnv(gym.Env):
 
         elif action_type < 2:
             # Sell amount % of shares held
-            print(self.shares_held ,amount)
             # shares_sold = int(self.shares_held * amount)
             shares_sold = self.shares_held
             self.balance += shares_sold * current_price
@@ -180,7 +178,6 @@ class StockTradingEnv(gym.Env):
         # Render the environment to the screen
         if mode == 'file':
             self._render_to_file(kwargs.get('filename', 'render.txt'))
-
         elif mode == 'live':
             if self.visualization == None:
                 self.visualization = StockTradingGraph(
