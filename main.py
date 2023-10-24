@@ -73,10 +73,8 @@ class DQN(nn.Module):
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
     def forward(self, x):
-        print(x)
         bs = x.shape[0]*x.shape[1]*x.shape[2]//210
         x , (h,c)= self.lstm(x.reshape(bs,42,5))
-        print(h)
         x = torch.tensor(h,device=device)
         x = x.reshape(bs,10)
         x = F.relu(self.layer1(x))
@@ -121,9 +119,10 @@ def select_action(state):
             # t.max(1) will return the largest column value of each row.
             # second column on max result is index of where max element was
             # found, so we pick action with the larger expected reward.
-            return torch.tensor([[[torch.scalar_tensor(policy_net(state).max(1)[1].view(1, 1)[0][0]),10]]])
+            print(torch.tensor([[[policy_net(state).max(1)[1].view(1, 1)[0][0],1]]]))
+            return torch.tensor([[[policy_net(state).max(1)[1].view(1, 1)[0][0],1]]])
     else:
-        return torch.tensor([[[env.action_space.sample()[0],10]]], device=device, dtype=torch.long)
+        return torch.tensor([[[env.action_space.sample()[0],1]]], device=device, dtype=torch.int64)
 
 
 episode_durations = []
@@ -133,6 +132,7 @@ episode_durations = []
 def optimize_model():
     if len(memory) < BATCH_SIZE:
         return
+    print("================OPTIMISING==============",len(memory))
     transitions = memory.sample(BATCH_SIZE)
     # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
     # detailed explanation). This converts batch-array of Transitions
@@ -153,8 +153,9 @@ def optimize_model():
     # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
     # columns of actions taken. These are the actions which would've been taken
     # for each batch state according to policy_net
-    state_action_values = policy_net(state_batch)
-    # .gather(1, action_batch)
+    # print(torch.tensor([[x[0][0]] for x in action_batch]))
+
+    state_action_values = policy_net(state_batch).gather(1,torch.tensor([[x[0][0]] for x in action_batch]))
 
     # Compute V(s_{t+1}) for all next states.
     # Expected values of actions for non_final_next_states are computed based
@@ -169,6 +170,7 @@ def optimize_model():
 
     # Compute Huber loss
     criterion = nn.SmoothL1Loss()
+    print(state_action_values.shape,expected_state_action_values.unsqueeze(1).shape)
     loss = criterion(state_action_values, expected_state_action_values.unsqueeze(1))
 
     # Optimize the model

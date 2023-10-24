@@ -179,7 +179,7 @@ class StockTradingGraph:
         plt.setp(self.net_worth_ax.get_xticklabels(), visible=False)
         
         # Necessary to view frames before they are unrendered
-        plt.pause(1)
+        plt.pause(0.001)
 
     def close(self):
         plt.close()
